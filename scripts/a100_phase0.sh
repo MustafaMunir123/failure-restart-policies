@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 ROOT="$PWD"
-mkdir -p phase0_logs
+mkdir -p artifacts phase0_logs typesense-data
 LOG() { echo "[$(date +%H:%M:%S)] $*" | tee -a phase0_logs/main.log; }
 
 # ---- 1. clone + pin benchmark repos side-by-side ----
