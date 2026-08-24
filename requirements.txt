@@ -1,0 +1,4 @@
+# Floor-pinned deps for the recovery-mode harness (host installs torch separately)
+pyyaml>=6.0
+jsonschema>=4.20
+pytest>=8.0
