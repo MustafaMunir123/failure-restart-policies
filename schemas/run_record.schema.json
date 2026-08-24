@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RunRecord",
+  "description": "One row per (task, policy, model, seed) run in the recovery-mode pilot.",
+  "type": "object",
+  "required": [
+    "run_id", "task_id", "domain", "model", "policy", "seed",
+    "attempt_1_hit_visible_error", "totals", "grade", "flags"
+  ],
+  "properties": {
+    "run_id": {"type": "string", "description": "{model}:{policy}:{seed}:{task_id}"},
+    "task_id": {"type": "string"},
+    "domain": {"type": "string", "enum": ["retail", "booking", "insurance", "neobank", "consulting"]},
+    "model": {"type": "string", "enum": ["Qwen3-1.7B", "Qwen3-4B", "Qwen3-8B"]},
+    "policy": {"type": "string", "enum": ["P0_stop", "P1_blind_restart", "P2_same_session", "P3_restart_note"]},
+    "seed": {"type": "integer"},
+    "attempt_1_hit_visible_error": {"type": "boolean"},
+    "attempt_1": {"$ref": "#/$defs/attempt"},
+    "attempt_2": {"oneOf": [{"$ref": "#/$defs/attempt"}, {"type": "null"}]},
+    "visible_error": {
+      "description": "First/most severe visible error of attempt 1 (null if none)",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {"enum": ["tool_error", "parse_failure", "task_timeout"]},
+            "tool": {"type": ["string", "null"]},
+            "error_text": {"type": ["string", "null"], "maxLength": 2000},
+            "arg_names": {"type": "array", "items": {"type": "string"}}
+          }
+        },
+        {"type": "null"}
+      ]
+    },
+    "totals": {
+      "type": "object",
+      "required": ["tokens_agent_in", "tokens_agent_out", "tokens_simulator_in", "tokens_simulator_out", "gpu_seconds", "wall_seconds"],
+      "properties": {
+        "tokens_agent_in": {"type": "number"},
+        "tokens_agent_out": {"type": "number"},
+        "tokens_simulator_in": {"type": "number"},
+        "tokens_simulator_out": {"type": "number"},
+        "gpu_seconds": {"type": "number"},
+        "wall_seconds": {"type": "number"}
+      }
+    },
+    "grade": {
+      "type": "object",
+      "required": ["passed"],
+      "properties": {
+        "passed": {"type": "boolean"},
+        "failed_checks": {"type": "array", "items": {"type": "string"}},
+        "rubric_results": {"type": ["array", "null"], "items": {"type": "object"}},
+        "graded_attempt": {"enum": [1, 2]}
+      }
+    },
+    "collateral": {
+      "type": "object",
+      "properties": {
+        "duplicate_writes": {"type": "integer"},
+        "wrong_record_changes": {"type": "integer"},
+        "extra_objects": {"type": "integer"},
+        "policy_violations": {"type": "integer"}
+      }
+    },
+    "flags": {
+      "type": "object",
+      "required": [],
+      "properties": {
+        "budget_exhausted": {"type": "boolean"},
+        "harness_error": {"type": "boolean"},
+        "p2_mechanism": {"enum": ["native", "replay", null]},
+        "shared_attempt_1": {"type": "boolean"}
+      }
+    },
+    "config_hash": {"type": "string"}
+  },
+  "$defs": {
+    "attempt": {
+      "type": ["object", "null"],
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["success", "failed_visible_error", "failed_silent", "budget_exhausted", "harness_error"]},
+        "n_turns": {"type": "integer"},
+        "tokens_in": {"type": "number"},
+        "tokens_out": {"type": "number"},
+        "tool_calls": {"type": "integer"},
+        "gpu_seconds": {"type": "number"},
+        "wall_seconds": {"type": "number"},
+        "trace_path": {"type": ["string", "null"]}
+      }
+    }
+  }
+}
