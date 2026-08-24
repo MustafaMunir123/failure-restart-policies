@@ -93,10 +93,15 @@ def execute_run(task_id: str, domain: str, model: str, policy: str,
             if not action.continue_session:
                 pass  # P1/P3: fresh env; P2: keep everything
             ab2 = budget.start_attempt()
+            resume_ctx = None
+            if action.continue_session:
+                # hand attempt-1's live conversation to the adapter (native P2);
+                # adapter falls back to replay if the framework can't resume.
+                resume_ctx = result1.get("trace") or {"resume_from_attempt": 1}
             env.start_attempt(task_id, action.second_seed or base_seed,
                               reset_env=action.reset_env,
                               prepend_note=action.inject_note,
-                              resume_trace=result1.get("trace") if action.continue_session else None)
+                              resume_trace=resume_ctx)
             result2 = env.step(ab2)
             budget.settle_attempt(ab2, ab2.tokens_used)
             exhausted = ab2.exhausted
