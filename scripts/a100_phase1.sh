@@ -32,7 +32,7 @@ bash scripts/install_typesense.sh
 
 # ---- 3. vLLM env ----
 uv venv --python 3.12 --allow-existing "$ROOT/vllm-venv"
-uv pip install --python "$ROOT/vllm-venv/bin/python" vllm
+uv pip install --python "$ROOT/vllm-venv/bin/python" vllm --torch-backend=auto
 
 # ---- 4. services ----
 typesense-server --data-dir "$ROOT/typesense-data" --api-key Fake \
