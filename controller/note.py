@@ -13,8 +13,7 @@ TEMPLATE = (
     "A previous attempt at this task made a tool call that returned an error.\n"
     "Failed tool: {tool}\n"
     "Error returned: {error_text}\n"
-    "Arguments involved: {arg_names}\n"
-    "You are starting fresh. Complete the original task below."
+    "Arguments involved: {arg_names}"
 )
 
 
