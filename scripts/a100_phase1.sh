@@ -4,7 +4,7 @@
 # Sequential serving. Artifacts -> artifacts/, logs -> phase1_logs/ (persistent NFS).
 set -uo pipefail
 cd "$(dirname "$0")/.."
-ROOT="$PWD"; PARENT="$(dirname "$ROOT")"
+export ROOT="$PWD"; PARENT="$(dirname "$ROOT")"
 mkdir -p artifacts phase1_logs typesense-data
 LOG() { echo "[$(date +%H:%M:%S)] $*" | tee -a phase1_logs/main.log; }
 FAIL=0
