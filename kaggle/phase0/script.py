@@ -16,7 +16,7 @@ WORK = "/kaggle/working"
 BASE = "/tmp/tb"
 os.makedirs(BASE, exist_ok=True)
 VENV = f"{BASE}/venv"
-UV = "/root/.local/bin/uv"
+UV = shutil.which("uv") or "/usr/local/bin/uv"  # resolved AFTER install step
 LOGS = f"{WORK}/logs"
 os.makedirs(LOGS, exist_ok=True)
 
@@ -57,7 +57,9 @@ def wait_port(port, proc, name, timeout=900):
 try:
     # ---------- 1. uv + python 3.12 ----------
     run("curl -LsSf https://astral.sh/uv/install.sh | sh", "install uv")
-    os.environ["PATH"] = "/root/.local/bin:" + os.environ["PATH"]
+    os.environ["PATH"] = "/root/.local/bin:/usr/local/bin:" + os.environ["PATH"]
+    UV = shutil.which("uv") or "/usr/local/bin/uv"
+    log_step("resolve uv", shutil.which("uv") is not None, UV)
 
     # ---------- 2. clone + pin ----------
     run("git clone --depth 50 https://github.com/microsoft/thinkingbox.git thinkingbox",
@@ -94,7 +96,7 @@ try:
     VVENV = f"{BASE}/vllm-venv"
     run([UV, "venv", "--python", "3.12", VVENV], "create vllm venv")
     run([UV, "pip", "install", "--python", f"{VVENV}/bin/python", "vllm"],
-        "install vllm", env={**env, "UV_PROJECT_ENVIRONMENT": ""}, timeout=7200)
+        "install vllm", timeout=7200)
     vllm_log = open(f"{LOGS}/vllm_serve.log", "wb")
     vllm_proc = subprocess.Popen(
         [f"{VVENV}/bin/vllm", "serve", "Qwen/Qwen3-4B",
