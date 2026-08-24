@@ -76,6 +76,8 @@ try:
     # ---------- 3. framework venv (python 3.12) ----------
     env = dict(os.environ,
                UV_PROJECT_ENVIRONMENT=VENV,
+               VIRTUAL_ENV=VENV,
+               PATH=f"{VENV}/bin:" + os.environ["PATH"],
                THINKINGBOX_DATA=f"{BASE}/thinkingbox-data",
                TB_MCP_START_SERVERS_FILE=f"{BASE}/thinkingbox-data/servers/servers.yaml",
                TYPESENSE_API_KEY="Fake")
@@ -90,7 +92,12 @@ try:
     # ---------- 4. typesense (use framework's own installer) ----------
     run(["bash", "scripts/install_typesense.sh"], "install typesense",
         cwd=f"{BASE}/thinkingbox", env=env, timeout=900)
-    run("typesense-server --version", "check typesense", env=env)
+    # NOTE: typesense 30.1 has no --version flag; it prints the banner then exits 1
+    # demanding --data-dir. So: non-fatal check, PASS if banner appears.
+    rc = run("typesense-server --version", "check typesense", env=env, check=False)
+    banner = open(f"{LOGS}/check_typesense.log").read()
+    log_step("verify typesense binary", "Typesense" in banner,
+             banner.splitlines()[0] if banner else "empty")
 
     # ---------- 5. vLLM serving Qwen3-4B ----------
     VVENV = f"{BASE}/vllm-venv"
@@ -124,33 +131,25 @@ try:
     log_step("start session proxy", proxy_proc.poll() is None,
              f"pid={proxy_proc.pid}")
 
-    # ---------- 7. write LLM config ----------
-    cfg = f"""agent_model:
-  type: aoai
-  deployment: "Qwen3-4B"
-  endpoint_url: "http://127.0.0.1:8000/v1/chat/completions"
-  credential:
-    type: api-key
-    api_key: "EMPTY"
-  is_reasoning: false
-  reasoning_source: none
-  temperature: 0.7
-  max_completion_tokens: 4096
-  timeout: 60.0
+    # ---------- 7. write LLM config (schema per pinned config_types.py) ----------
+    cfg = """mcp_proxy:
+  endpoint_url: "http://127.0.0.1:7111"
+  timeout: 300.0
 
-user_model:
-  type: aoai
-  deployment: "Qwen3-4B"
-  endpoint_url: "http://127.0.0.1:8000/v1/chat/completions"
-  credential:
-    type: api-key
-    api_key: "EMPTY"
-  is_reasoning: false
-  reasoning_source: none
-  temperature: 0.3
-  seed: 42
-  max_completion_tokens: 512
-  timeout: 60.0
+orchestrator:
+  type: thinkingbox
+  agent_model:
+    type: aoai
+    deployment: "Qwen3-4B"
+    endpoint_url: "http://127.0.0.1:8000/v1/chat/completions"
+    credential:
+      type: api-key
+      api_key: "EMPTY"
+    is_reasoning: false
+    reasoning_source: none
+    temperature: 0.7
+    max_completion_tokens: 4096
+    timeout: 120.0
 
 judge_model:
   type: aoai
@@ -164,6 +163,22 @@ judge_model:
   temperature: 0.0
   seed: 42
   max_completion_tokens: 128
+  timeout: 60.0
+
+judge_type: "legacy"
+
+user_model:
+  type: aoai
+  deployment: "Qwen3-4B"
+  endpoint_url: "http://127.0.0.1:8000/v1/chat/completions"
+  credential:
+    type: api-key
+    api_key: "EMPTY"
+  is_reasoning: false
+  reasoning_source: none
+  temperature: 0.3
+  seed: 42
+  max_completion_tokens: 512
   timeout: 60.0
 """
     cfg_path = f"{BASE}/wiring_config.yaml"

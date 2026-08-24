@@ -1,42 +1,33 @@
 # LLM endpoint configs — Thinkingbox framework
-# Template: fill in after vLLM is running on the host. One file per agent size.
-# Docs: thinkingbox/docs/llm_endpoint_config.md
+# VERIFIED against pinned commit dafead8 (thinkingbox/common/config_types.py).
+# Required top-level blocks: mcp_proxy, orchestrator, judge_model; user_model optional.
+# agent_model at top level is DEPRECATED — nest under orchestrator.agent_model.
 #
-# NOTE (Phase 0): exact field names must be verified against
-# thinkingbox/common/config_types.py::ConfigFile on the pinned commit.
-# user_model / judge_model blocks mirror the agent block with is_reasoning: false.
+# Per-size copies: change deployment name + endpoint_url port if serving separately.
 
-agent_model:
+mcp_proxy:
+  endpoint_url: "http://127.0.0.1:7111"   # Session Proxy started via `tb mcp-start`
+  timeout: 300.0
+
+orchestrator:
+  type: thinkingbox
+  agent_model:
+    type: aoai
+    deployment: "Qwen3-4B"                # served model name (--served-model-name)
+    endpoint_url: "http://127.0.0.1:8000/v1/chat/completions"
+    credential:
+      type: api-key
+      api_key: "EMPTY"                    # vLLM ignores, field required
+    is_reasoning: false                   # thinking mode DISABLED (locked decision)
+    reasoning_source: none
+    temperature: 0.7                      # exact value frozen in Phase 4
+    max_completion_tokens: 4096           # per-request cap; pool enforced by controller
+    timeout: 120.0                        # TBD-1: 30s per-request planned; 120 here until tuned
+
+judge_model:                              # only for the 30 rubric tasks (secondary)
   type: aoai
-  deployment: "Qwen3-4B"                       # served model name (--served-model-name)
+  deployment: "Qwen3-4B"
   endpoint_url: "http://127.0.0.1:8000/v1/chat/completions"
-  credential:
-    type: api-key
-    api_key: "EMPTY"                            # vLLM ignores, field required
-  is_reasoning: false                           # thinking mode DISABLED (locked decision)
-  reasoning_source: none
-  temperature: 0.7                              # TBD freeze exact value in Phase 4
-  max_completion_tokens: 4096                   # per-request cap; pool enforced by controller
-  timeout: 60.0                                 # TBD-1
-
-user_model:                                     # frozen simulator: Qwen3-4B temp 0.3 fixed seed
-  type: aoai
-  deployment: "Qwen3-4B"
-  endpoint_url: "http://127.0.0.1:8001/v1/chat/completions"   # second vLLM instance or same w/ router
-  credential:
-    type: api-key
-    api_key: "EMPTY"
-  is_reasoning: false
-  reasoning_source: none
-  temperature: 0.3
-  seed: 42
-  max_completion_tokens: 512
-  timeout: 60.0
-
-judge_model:                                    # only for the 30 rubric tasks (secondary)
-  type: aoai
-  deployment: "Qwen3-4B"
-  endpoint_url: "http://127.0.0.1:8001/v1/chat/completions"
   credential:
     type: api-key
     api_key: "EMPTY"
@@ -45,4 +36,20 @@ judge_model:                                    # only for the 30 rubric tasks (
   temperature: 0.0
   seed: 42
   max_completion_tokens: 128
+  timeout: 60.0
+
+judge_type: "legacy"
+
+user_model:                               # frozen simulator: Qwen3-4B temp 0.3 fixed seed
+  type: aoai
+  deployment: "Qwen3-4B"
+  endpoint_url: "http://127.0.0.1:8000/v1/chat/completions"
+  credential:
+    type: api-key
+    api_key: "EMPTY"
+  is_reasoning: false
+  reasoning_source: none
+  temperature: 0.3
+  seed: 42
+  max_completion_tokens: 512
   timeout: 60.0
