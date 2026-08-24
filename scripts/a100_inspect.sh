@@ -1,18 +1,16 @@
 #!/usr/bin/env bash
-# Inspect persistent NFS state: pull Phase-1 smoke results + 8B failure cause.
-set -uo pipefail
+# Inspect #2: get the ACTUAL exception at end of vLLM engine-init tracebacks.
 ROOT="/lambda/nfs/ic-fs-2/repos/systrem-recovery-modes"
 cd "$ROOT"
-echo "===== artifacts/ ====="
-ls -la artifacts/ 2>/dev/null
-echo "===== smoke_results.jsonl ====="
-cat artifacts/smoke_results.jsonl 2>/dev/null
-echo "===== phase1 main.log ====="
-cat phase1_logs/main.log 2>/dev/null | head -50
-echo "===== 8B vllm log (errors) ====="
-grep -inE "oom|out of memory|error|valueerror|runtimeerror|no such|download|cuda" \
-  phase1_logs/vllm_Qwen3-8B.log 2>/dev/null | grep -vi apiserver | head -25
-echo "===== last 30 lines of 8B log ====="
-tail -30 phase1_logs/vllm_Qwen3-8B.log 2>/dev/null
-tar czf /lambda/nfs/ic-fs-2/p1_logs.tgz phase1_logs artifacts 2>/dev/null
-echo "tarball: /lambda/nfs/ic-fs-2/p1_logs.tgz"
+for m in Qwen3-1.7B Qwen3-4B Qwen3-8B; do
+  echo "########## $m: first non-stacktrace error lines ##########"
+  grep -E "ERROR.*Error|ERROR.*error|raise|Exception" "phase1_logs/vllm_$m.log" 2>/dev/null | tail -6
+  echo "---------- $m: last 12 lines ----------"
+  tail -12 "phase1_logs/vllm_$m.log" 2>/dev/null | grep -v "^\s*File\|^APIServer"
+done
+echo "########## phase1_logs dir ##########"
+ls phase1_logs/ 2>/dev/null
+echo "########## any infer logs? ##########"
+ls phase1_logs/infer_* 2>/dev/null || echo "none - no task ever ran"
+echo "########## disk space ##########"
+df -h /lambda/nfs/ic-fs-2 | tail -1
