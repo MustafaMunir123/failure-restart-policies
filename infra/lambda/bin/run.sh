@@ -87,7 +87,9 @@ echo "Command:      $(printf '%s' "$CMD" | sed -E 's/((HF_TOKEN|HUGGINGFACE_TOKE
 echo
 
 # ---- ssh agent: make sure the key is loaded for forwarded git auth --------
-if ! ssh-add -l 2>/dev/null | grep -q "$(ssh-keygen -lf "$SSH_PUBLIC_KEY_FILE" | awk '{print $2}')"; then
+PUB_TMP=$(mktemp); ssh-keygen -yf "$SSH_PRIVATE_KEY_FILE" > "$PUB_TMP" 2>/dev/null
+FPR=$(ssh-keygen -lf "$PUB_TMP" 2>/dev/null | awk '{print $2}'); rm -f "$PUB_TMP"
+if ! ssh-add -l 2>/dev/null | grep -q "$FPR"; then
     echo "-- Loading $SSH_PRIVATE_KEY_FILE into ssh-agent (needed for forwarded git auth) --"
     ssh-add "$SSH_PRIVATE_KEY_FILE"
 fi

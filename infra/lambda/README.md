@@ -93,13 +93,13 @@ toolkit's policy, matching what was decided when it was built:
    python3 lambda/lambda_cli.py ssh-keys
    ```
    Check the output for a key whose `public_key` matches your local
-   `~/.ssh/lambda_id_ed25519.pub` byte for byte — if one's already there
+   the registered key — if one's already there
    (common if you've used Lambda's console before), just set
    `ssh_key_name` in `lambda/config.yaml` to *its* registered name.
    Otherwise register it:
    ```bash
    python3 lambda/lambda_cli.py add-ssh-key --name <a-name> \
-       --pubkey-file ~/.ssh/lambda_id_ed25519.pub
+       --pubkey-file <public key for ~/.ssh/lambda_id_ed25519>
    ```
    and use that name in `ssh_key_name`.
 

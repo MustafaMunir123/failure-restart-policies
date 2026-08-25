@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Poll for A100 capacity in us-east-1; launch phase-1 when a slot opens.
 set -uo pipefail
-cd "$(dirname "$0")/../.."
+cd "$(dirname "$0")/.."
 set -a; source .env; set +a
 export LAMBDA_API_KEY="$LAMBDA_CLOUD_API_KEY"
 ssh-add ~/.ssh/id_ed25519_personal ~/.ssh/lambda_id_ed25519 2>/dev/null

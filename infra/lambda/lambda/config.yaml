@@ -14,13 +14,10 @@
 filesystem: "ic-fs-2"
 region: "us-east-1"
 
-# SSH key registered with Lambda (see README) used to access every pod.
-# "lambda-public-key" is the name Lambda's console already has this exact
-# key registered under - confirmed by diffing it against
-# ~/.ssh/lambda_id_ed25519.pub, byte for byte identical. No need to
-# register a new one.
+# SSH key registered with Lambda (see README) used to access every pod
+# under the console name "lambda-public-key".
 ssh_key_name: "lambda-public-key"
-ssh_public_key_file: "~/.ssh/lambda_id_ed25519.pub"
+ssh_private_key_file: "~/.ssh/lambda_id_ed25519"
 ssh_private_key_file: "~/.ssh/lambda_id_ed25519"
 
 # GPU tiers to try, in priority order, when no --instance-type is given.
